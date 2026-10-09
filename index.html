@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>درب العراق</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #101b24;
+      color: white;
+    }
+    header { padding: 18px; background: #172833; }
+    h1 { margin: 0 0 6px; font-size: 25px; }
+    header p { margin: 0; color: #b9c9d2; }
+    .search { display: flex; gap: 8px; padding: 12px; }
+    input {
+      min-width: 0; flex: 1; padding: 12px;
+      border: 0; border-radius: 10px; font-size: 16px;
+    }
+    button {
+      border: 0; border-radius: 10px; padding: 12px;
+      background: #20b981; color: #08251b;
+      font-size: 15px; font-weight: bold; cursor: pointer;
+    }
+    #map { height: 55vh; min-height: 300px; }
+    .actions { display: flex; gap: 8px; padding: 12px; flex-wrap: wrap; }
+    .actions button { flex: 1; }
+    #status { padding: 0 14px 14px; color: #c5d5dd; }
+    .note { font-size: 12px; color: #a9bac4; padding: 0 14px 16px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>درب العراق 🇮🇶</h1>
+    <p>طريقك أوضح، خطوتك أذكى</p>
+  </header>
+
+  <div class="search">
+    <input id="destination" placeholder="اكتب وجهتك في بغداد">
+    <button onclick="findPlace()">بحث</button>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="actions">
+    <button onclick="locateMe()">📍 موقعي</button>
+    <button onclick="reportTraffic()">🚗 بلاغ زحام</button>
+    <button onclick="speakStatus()">🔊 الصوت</button>
+  </div>
+
+  <div id="status">جاري تجهيز خريطة بغداد...</div>
+  <div class="note">
+    نسخة تجريبية. البلاغات محلية على هذا الجهاز وليست مشاركة مباشرة بين السائقين.
+    بيانات الخريطة من OpenStreetMap.
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([33.3152, 44.3661], 12);
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let myMarker;
+    let reports = [];
+
+    document.getElementById('status').textContent =
+      'الخريطة جاهزة للتجربة. اسمح بالموقع حتى نحدد مكانك.';
+
+    function locateMe() {
+      if (!navigator.geolocation) {
+        alert('المتصفح لا يدعم تحديد الموقع.');
+        return;
+      }
+      document.getElementById('status').textContent = 'جاري تحديد موقعك...';
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          map.setView([lat, lon], 16);
+          if (myMarker) map.removeLayer(myMarker);
+          myMarker = L.marker([lat, lon]).addTo(map)
+            .bindPopup('موقعك الحالي').openPopup();
+          document.getElementById('status').textContent =
+            'تم تحديد موقعك بنجاح.';
+        },
+        () => {
+          document.getElementById('status').textContent =
+            'تعذر تحديد الموقع. تأكد من إذن الموقع والاتصال بالإنترنت.';
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+
+    async function findPlace() {
+      const query = document.getElementById('destination').value.trim();
+      if (!query) return alert('اكتب اسم وجهتك أولاً.');
+      document.getElementById('status').textContent = 'جاري البحث...';
+      try {
+        const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=iq&q='
+          + encodeURIComponent(query + ', Baghdad');
+        const response = await fetch(url);
+        const places = await response.json();
+        if (!places.length) {
+          document.getElementById('status').textContent = 'ما لكيت الوجهة. جرّب اسم ثاني.';
+          return;
+        }
+        const place = places[0];
+        map.setView([Number(place.lat), Number(place.lon)], 16);
+        L.marker([Number(place.lat), Number(place.lon)]).addTo(map)
+          .bindPopup(place.display_name).openPopup();
+        document.getElementById('status').textContent = 'ظهرت الوجهة على الخريطة.';
+      } catch {
+        document.getElementById('status').textContent =
+          'فشل البحث. تأكد من الإنترنت وحاول لاحقاً.';
+      }
+    }
+
+    function reportTraffic() {
+      if (!myMarker) {
+        alert('حدد موقعك أولاً حتى تضيف البلاغ بمكانه.');
+        return;
+      }
+      const point = myMarker.getLatLng();
+      const marker = L.marker(point).addTo(map)
+        .bindPopup('⚠️ بلاغ زحام تجريبي');
+      reports.push({ lat: point.lat, lon: point.lng, time: Date.now() });
+      marker.openPopup();
+      document.getElementById('status').textContent =
+        'تم وضع بلاغ تجريبي على جهازك فقط.';
+    }
+
+    function speakStatus() {
+      if (!('speechSynthesis' in window)) {
+        alert('الصوت غير مدعوم بهذا المتصفح.');
+        return;
+      }
+      speechSynthesis.cancel();
+      const message = new SpeechSynthesisUtterance(
+        'أهلاً بيك بدرب العراق. نتمنى لك طريقاً آمناً.'
+      );
+      message.lang = 'ar-IQ';
+      speechSynthesis.speak(message);
+    }
+  </script>
+</body>
+</html>
