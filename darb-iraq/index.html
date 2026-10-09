@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <title>درب العراق</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">📍</span>
+      <div>
+        <h1>درب العراق</h1>
+        <p>طريقك أوضح ويانه</p>
+      </div>
+    </div>
+    <button id="locateButton" class="icon-button" type="button">موقعي</button>
+  </header>
+
+  <main class="app-layout">
+    <section class="panel">
+      <h2>وين تريد تروح؟</h2>
+
+      <form id="searchForm">
+        <label for="destinationInput">اسم المكان أو العنوان</label>
+        <div class="search-row">
+          <input
+            id="destinationInput"
+            type="search"
+            placeholder="مثلاً: مطار بغداد الدولي"
+            autocomplete="off"
+            required
+          >
+          <button class="primary-button" type="submit">بحث</button>
+        </div>
+      </form>
+
+      <p id="status" class="status" role="status">جاري تجهيز الخريطة...</p>
+      <div id="searchResults" class="search-results"></div>
+
+      <div class="trip-buttons">
+        <button id="clearButton" class="secondary-button" type="button">مسح الرحلة</button>
+      </div>
+
+      <section id="tripInfo" class="trip-info" hidden>
+        <h2>معلومات الرحلة</h2>
+
+        <div class="stats">
+          <div class="stat">
+            <span>المسافة</span>
+            <strong id="distance">—</strong>
+          </div>
+          <div class="stat">
+            <span>المدة المتوقعة</span>
+            <strong id="duration">—</strong>
+          </div>
+        </div>
+
+        <div class="arrival-box">
+          <span>وقت الوصول التقريبي</span>
+          <strong id="arrivalTime">—</strong>
+        </div>
+
+        <h3>المسارات البديلة</h3>
+        <div id="routeOptions" class="route-options"></div>
+
+        <button id="startButton" class="primary-button full-button" type="button">
+          ابدأ الملاحة الصوتية
+        </button>
+        <button id="stopButton" class="secondary-button full-button" type="button" hidden>
+          إيقاف الملاحة
+        </button>
+
+        <div id="navigationInfo" class="navigation-info" hidden>
+          <span>التوجيه الحالي</span>
+          <strong id="nextInstruction">—</strong>
+        </div>
+      </section>
+
+      <p class="disclaimer">
+        أوقات الوصول تقديرية وتعتمد على بيانات الطريق المتاحة، وقد لا تعكس الازدحام المباشر.
+      </p>
+    </section>
+
+    <section class="map-section" aria-label="الخريطة">
+      <div id="map"></div>
+      <div class="map-note">الخريطة من OpenStreetMap</div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
